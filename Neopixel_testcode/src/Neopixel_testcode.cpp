@@ -98,7 +98,7 @@ pinMode (D13, INPUT);
 attachInterrupt(D13, endSession, FALLING);
 pinMode (D14, INPUT);
 attachInterrupt(D14, endSession, FALLING);
-pinMode (D18, INPUT);
+pinMode (D18, INPUT_PULLDOWN);
 attachInterrupt(D18, endSession, FALLING);
 pinMode (D19, INPUT);
 attachInterrupt(D19, endSession, FALLING);
@@ -140,7 +140,7 @@ dipTwo = digitalRead(D14);
 dipThree = digitalRead(D19);
 dipFour = digitalRead(D18);
 dipValue = dipFour << 3 | dipThree << 2 | dipTwo << 1 | dipOne;
-//Serial.printf("dipOne = %i, dipTwo = %i, dipThree = %i, dipFour = %i\n", dipOne, dipTwo, dipThree, dipFour);
+Serial.printf("dipOne = %i, dipTwo = %i, dipThree = %i, dipFour = %i\n", dipOne, dipTwo, dipThree, dipFour);
 Serial.printf("Decision value = %i\n", dipValue);
 delay(3000);
 
@@ -170,7 +170,10 @@ switch (dipValue) {
   break;
 }
  if (sleepFlag){
-  Serial.printf("Going to SLeep\n");
+  Serial.printf("Going to Sleep\n");
+  display.setCursor(0,0);
+  display.printf("Until Next Time\n");
+  display.display();
   sleepFlag = false;
   sleepULP();
  }
@@ -408,8 +411,8 @@ void racingThoughts() {
   endSesh = true;
 display.clearDisplay();
 display.setCursor(0,0);
-display.printf("Slow\n"); //OLED screen
-display.printf("Down\n");
+display.printf("Racing\n"); //OLED screen
+display.printf("Thoughts?\n");
 display.display();
 delay(500);
 readySetGo();
@@ -575,12 +578,19 @@ void publishValues() {
 }
 
 void sleepULP() {
+  display.clearDisplay();
+  display.display();
+  pixel.clear();
+  pixel.show();
   SystemSleepConfiguration config;
   config.mode (SystemSleepMode::ULTRA_LOW_POWER).gpio(D16, FALLING);
   SystemSleepResult result = System.sleep(config);
   delay(1000);
   if (result.wakeupReason () == SystemSleepWakeupReason::BY_GPIO) {
     Serial.printf("Awaked by GPIO %i\n", result.wakeupPin());
+    Serial.printf("waking dipValue is %i\n", dipValue);
+    // dipValue = 0;
+        Serial.printf("next dipValue is %i\n", dipValue);
   }
 }
 
