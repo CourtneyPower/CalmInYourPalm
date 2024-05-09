@@ -33,7 +33,7 @@ const int OLED_RESET = -1;
 Adafruit_SSD1306 display(OLED_RESET);
 Adafruit_NeoPixel pixel(PIXEL_COUNT, SPI1, PIXEL_TYPE);
 Encoder myEnc(D8, D9);
-Button encSwitch(D16);
+Button encSwitch(D16); //TS encswitch
 IoTTimer sessionTimer, inputTimer;
 int neoNum, currentTime, lastTime, i, j, k;
 bool onOff, endSesh;
@@ -94,16 +94,16 @@ Particle.connect();
   Particle.syncTime();
 Serial.begin(9600);
 waitFor(Serial.isConnected, 10000);
-pinMode (D13, INPUT);
-attachInterrupt(D13, endSession, FALLING);
-pinMode (D14, INPUT);
-attachInterrupt(D14, endSession, FALLING);
-pinMode (D18, INPUT_PULLDOWN);
-attachInterrupt(D18, endSession, FALLING);
-pinMode (D19, INPUT);
-attachInterrupt(D19, endSession, FALLING);
-pinMode (D16, INPUT);
-attachInterrupt(D16, buttonInterrupt, FALLING);
+pinMode (D13, INPUT); //dipswitch
+attachInterrupt(D13, endSession, FALLING); //sets a flag when dipswitch is moved to off
+pinMode (D14, INPUT); //dipswitch
+attachInterrupt(D14, endSession, FALLING); //sets a flag when dipswitch is moved to off
+pinMode (D18, INPUT_PULLDOWN); //dipswitch
+attachInterrupt(D18, endSession, FALLING); //sets a flag when dipswitch is moved to off
+pinMode (D19, INPUT); //dipswitch
+attachInterrupt(D19, endSession, FALLING); //sets a flag when dipswitch is moved to off
+pinMode (D16, INPUT); //TS encswitch
+attachInterrupt(D16, buttonInterrupt, FALLING); //sets a flag to go to ULP mode
   pixel.begin();
   pixel.setBrightness (BRI);
   pixel.clear();
@@ -124,7 +124,7 @@ display.setCursor(0,0);
 dipValue = 0;
 endSesh = true;
 lastTime = millis();
-sessionTimer.startTimer(60000); //move into loop once modes fixed
+//sessionTimer.startTimer(60000); //move into loop once modes fixed
 }
 
 void loop() {
@@ -145,37 +145,34 @@ Serial.printf("Decision value = %i\n", dipValue);
 delay(3000);
 
 switch (dipValue) {
-  case 0:
-  makeSelection();
+  case 0: //all switches off
+  makeSelection(); //line 222
   break;
 
-  case 1:
-  boxBreathing();
+  case 1: //dipOne 'on'
+  boxBreathing(); //line 260
   break;
 
-  case 2:
-  findCenter();
+  case 2: //dipTwo 'on'
+  findCenter(); //line 321
   break;
 
-  case 4:
-  racingThoughts();
+  case 4: //dipThree 'on'
+  racingThoughts(); //line 409
   break;
 
-  case 8:
-  maxMotivation();
+  case 8: //dipFour 'on'
+  maxMotivation(); //line 489
   break;
 
-  default:
-  pickOne();
+  default: //if dipswitches in any configuration but above triggers warning
+  pickOne(); //line 232
   break;
 }
- if (sleepFlag){
+ if (sleepFlag){ //changes with encoder switch press
   Serial.printf("Going to Sleep\n");
-  display.setCursor(0,0);
-  display.printf("Until Next Time\n");
-  display.display();
   sleepFlag = false;
-  sleepULP();
+  sleepULP(); //line 578
  }
 
 }
@@ -215,7 +212,7 @@ bool MQTT_ping() {
   return pingStatus;
 }
 
-void endSession() {
+void endSession() {  //boolean flag for falling dip switch
  endSesh = false;
 }
 
@@ -257,8 +254,7 @@ for (i=0; i<6; i++) {
    }
 }
 
-void boxBreathing() {
-  // box breathing, pixel moves every 1 second
+void boxBreathing() { // box breathing, pixel moves every 1 second
 SessionName = "Box Breathing";
 endSesh = true;
 neoNum = 0;
@@ -273,7 +269,6 @@ sessionTimer.startTimer(60000);
 readySetGo();
 display.display();
 while(!sessionTimer.isTimerReady()){
-//currentTime = millis();
 if (millis() - lastTime > 1000) {
   pixel.setPixelColor(breathingArray[neoNum], breathingColors[neoNum/4]);
   pixel.show();
@@ -318,8 +313,7 @@ for (i=0; i<9; i++) {
 }
 }
 
-void findCenter() {
-//  Centering Squares
+void findCenter() { //  Centering Squares
 SessionName = "Finding Center";
 endSesh = true;
 display.clearDisplay();
@@ -420,8 +414,9 @@ sessionTimer.startTimer(60000);
 display.clearDisplay();
 display.display();
 i = 0;
+neoNum = 0;
 while(!sessionTimer.isTimerReady()){
- if ((millis() - lastTime) > centeringDelays[i]){
+ if ((millis() - lastTime) > centeringDelays[i]){ //this time comparison gets progressively bigger ie: slower
  // Serial.printf("Racing delay is %ims\n", centeringDelays[i]);
   lastTime = millis();
 encPos = myEnc.read();
