@@ -95,13 +95,13 @@ Particle.connect();
 Serial.begin(9600);
 waitFor(Serial.isConnected, 10000);
 pinMode (D13, INPUT); //dipswitch
-attachInterrupt(D13, endSession, FALLING); //sets a flag when dipswitch is moved to off
+attachInterrupt(D13, endSession, RISING); //sets a flag when dipswitch is moved to off
 pinMode (D14, INPUT); //dipswitch
-attachInterrupt(D14, endSession, FALLING); //sets a flag when dipswitch is moved to off
+attachInterrupt(D14, endSession, RISING); //sets a flag when dipswitch is moved to off
 pinMode (D18, INPUT_PULLDOWN); //dipswitch
-attachInterrupt(D18, endSession, FALLING); //sets a flag when dipswitch is moved to off
+attachInterrupt(D18, endSession, RISING); //sets a flag when dipswitch is moved to off
 pinMode (D19, INPUT); //dipswitch
-attachInterrupt(D19, endSession, FALLING); //sets a flag when dipswitch is moved to off
+attachInterrupt(D19, endSession, RISING); //sets a flag when dipswitch is moved to off
 pinMode (D16, INPUT); //TS encswitch
 attachInterrupt(D16, buttonInterrupt, FALLING); //sets a flag to go to ULP mode
   pixel.begin();
@@ -135,10 +135,10 @@ TimeOnly = DateTime.substring(11, 19);
 DateOnly = DateTime.substring(3,10);
 // Serial.printf("Time is %s\n", TimeOnly.c_str());
 // Serial.printf("Date is %s\n", DateOnly.c_str());
-dipOne = digitalRead(D13);
-dipTwo = digitalRead(D14);
-dipThree = digitalRead(D19);
-dipFour = digitalRead(D18);
+dipOne = !digitalRead(D13);
+dipTwo = !digitalRead(D14);
+dipThree = !digitalRead(D19);
+dipFour = !digitalRead(D18);
 dipValue = dipFour << 3 | dipThree << 2 | dipTwo << 1 | dipOne;
 Serial.printf("dipOne = %i, dipTwo = %i, dipThree = %i, dipFour = %i\n", dipOne, dipTwo, dipThree, dipFour);
 Serial.printf("Decision value = %i\n", dipValue);
@@ -212,7 +212,7 @@ bool MQTT_ping() {
   return pingStatus;
 }
 
-void endSession() {  //boolean flag for falling dip switch
+void endSession() {  //boolean flag for rising dip switch
  endSesh = false;
 }
 
@@ -281,15 +281,15 @@ if (millis() - lastTime > 1000) {
 lastTime = millis();
           if (!endSesh){
             publishValues();
-      return;
-      }
+          return;
+          }
   }
     if (neoNum == 16){
       neoNum = 0;
     }
   }
 
-if (sessionTimer.isTimerReady()){
+//if (sessionTimer.isTimerReady()){
   pixel.clear();
 for (i=0; i<9; i++) {
   pixel.setPixelColor(happyFace[i],orange);
@@ -299,19 +299,27 @@ for (i=0; i<9; i++) {
   display.printf("Feeling\n");
   display.printf("Better?\n");
   display.display();
-  inputTimer.startTimer(3000);
-  if (inputTimer.isTimerReady()){
+  inputTimer.startTimer(5000);
+      while (!inputTimer.isTimerReady()){}
   display.clearDisplay();
   pixel.clear();
   pixel.show();
   display.display();
-  }
+      //   if (!endSesh){
+      //   publishValues();
+      //   return;
+      // }
+  
   if (!endSesh){
     publishValues();
     return;
   }
 }
-}
+  // if (!endSesh){
+  //   publishValues();
+  //   return;
+  // }
+//}
 
 void findCenter() { //  Centering Squares
 SessionName = "Finding Center";
@@ -386,7 +394,7 @@ for (i=0; i<9; i++) {
   display.printf("Feeling\n");
   display.printf("Better?\n");
   display.display();
-  inputTimer.startTimer(3000);
+  inputTimer.startTimer(5000);
   if (inputTimer.isTimerReady()){
   display.clearDisplay();
   pixel.clear();
@@ -467,7 +475,7 @@ for (i=0; i<9; i++) {
   display.printf("Feeling\n");
   display.printf("Better?\n");
   display.display();
-  inputTimer.startTimer(3000);
+  inputTimer.startTimer(5000);
   if (inputTimer.isTimerReady()){
   display.clearDisplay();
   pixel.clear();
@@ -548,7 +556,7 @@ for (i=0; i<9; i++) {
   display.printf("Feeling\n");
   display.printf("Better?\n");
   display.display();
-  inputTimer.startTimer(3000);
+  inputTimer.startTimer(5000);
   if (inputTimer.isTimerReady()){
   display.clearDisplay();
   pixel.clear();
