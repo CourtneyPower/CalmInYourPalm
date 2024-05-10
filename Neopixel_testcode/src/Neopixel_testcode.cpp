@@ -90,7 +90,7 @@ void setup() {
   }
 Particle.connect();
   delay(10000);
-  Time.zone(-7);
+  Time.zone(-6);
   Particle.syncTime();
 Serial.begin(9600);
 waitFor(Serial.isConnected, 10000);
@@ -447,14 +447,14 @@ encToPixel = map(encPos, 0, 95, 0, 24);
     }
   pixel.show();
 
-    if (neoNum == 24){
+  neoNum = neoNum + 1;
+      if (neoNum == 25){
       neoNum = 0;
       i++;
       if (i == 18){
         i = 0;
       }
     }
-  neoNum = neoNum + 1;
 }
 }
 if (sessionTimer.isTimerReady()){
@@ -527,15 +527,15 @@ if (encPos <= encMin) {
       pixel.setPixelColor(motivationNumbers[neoNum], green);
     }
   pixel.show();
+  neoNum = neoNum + 1;
 
-    if (neoNum == 24){
+      if (neoNum == 25){
       neoNum = 0;
       i--;
       if (i == 0){
         i = 6;
       }
     }
-  neoNum = neoNum + 1;
 }
 }
 if (sessionTimer.isTimerReady()){
@@ -583,9 +583,10 @@ void sleepULP() {
   delay(1000);
   if (result.wakeupReason () == SystemSleepWakeupReason::BY_GPIO) {
     Serial.printf("Awaked by GPIO %i\n", result.wakeupPin());
-    Serial.printf("waking dipValue is %i\n", dipValue);
-    // dipValue = 0;
-        Serial.printf("next dipValue is %i\n", dipValue);
+    // Serial.printf("waking dipValue is %i\n", dipValue);
+    // // dipValue = 0;
+    //     Serial.printf("next dipValue is %i\n", dipValue);
+    System.reset();
   }
 }
 
