@@ -1,7 +1,7 @@
 /* 
- * Project Neopixel test code_capstone
+ * Project CalmInYourPalm_capstone
  * Author: Courtney Power
- * Date: 
+ * Date: 5.17.24
  * Testing the various neopixel arrays needed for the device
  */
 
@@ -20,23 +20,20 @@
 #include "Adafruit_MQTT/Adafruit_MQTT.h"
 #include "credentials.h"
 
-// const int PIXELCOUNT = 25;
-const int BRI = 3;
-// Adafruit_NeoPixel pixel(PIXELCOUNT, SPI1, WS2812B);
 #define PIXEL_COUNT 25
 #define PIXEL_TYPE WS2812B
 
 SYSTEM_MODE(SEMI_AUTOMATIC);
-SYSTEM_THREAD(ENABLED);
-
+//SYSTEM_THREAD(ENABLED);
+const int BRI = 3;
 const int OLED_RESET = -1;
 Adafruit_SSD1306 display(OLED_RESET);
 Adafruit_NeoPixel pixel(PIXEL_COUNT, SPI1, PIXEL_TYPE);
 Encoder myEnc(D8, D9);
-Button encSwitch(D16); //TS encswitch
+Button encSwitch(D16); 
 IoTTimer sessionTimer, inputTimer;
 int neoNum, currentTime, lastTime, i, j, k;
-bool onOff, endSesh;
+bool endSesh = false;
 bool sleepFlag = false;
 int encPos, encToPixel, encMin, encMax, pixelMin, pixelMax, holdPixel;
 int dipValue, dipOne, dipTwo, dipThree, dipFour;
@@ -121,10 +118,8 @@ display.setCursor(0,0);
   encPos = 0;
   encMin = 0;
   encMax = 95;
-dipValue = 0;
-endSesh = true;
+  dipValue = 0;
 lastTime = millis();
-//sessionTimer.startTimer(60000); //move into loop once modes fixed
 }
 
 void loop() {
@@ -174,7 +169,7 @@ switch (dipValue) {
   sleepFlag = false;
   sleepULP(); //line 578
  }
-
+endSesh = false;
 }
 
 void MQTT_connect() {
@@ -212,8 +207,8 @@ bool MQTT_ping() {
   return pingStatus;
 }
 
-void endSession() {  //boolean flag for rising dip switch
- endSesh = false;
+void endSession() {  //boolean flag for rising dip switch ie: turning off mode
+ endSesh = true;
 }
 
 void makeSelection() {
@@ -248,7 +243,7 @@ for (i=0; i<6; i++) {
   }
   delay(300);
 }
-  if (!endSesh){
+  if (endSesh){
     publishValues();
     return;
    }
@@ -256,7 +251,6 @@ for (i=0; i<6; i++) {
 
 void boxBreathing() { // box breathing, pixel moves every 1 second
 SessionName = "Box Breathing";
-endSesh = true;
 neoNum = 0;
 display.clearDisplay();
 display.setCursor(0,0);
@@ -265,80 +259,75 @@ display.printf("Breathing\n");
 display.display();
 delay(500);
 display.clearDisplay();
-sessionTimer.startTimer(60000);
+sessionTimer.startTimer(60000); //1 minute timer
 readySetGo();
 display.display();
 while(!sessionTimer.isTimerReady()){
-if (millis() - lastTime > 1000) {
+if (millis() - lastTime > 1000) { //light up pixel every 1 second
   pixel.setPixelColor(breathingArray[neoNum], breathingColors[neoNum/4]);
   pixel.show();
-    if ((neoNum % 4) == 3) {
+    if ((neoNum % 4) == 3) { //clears each row of 4 pixels before proceeding to the next
     pixel.clear();
     delay(500);
     pixel.show();
     }
   neoNum = neoNum + 1;
 lastTime = millis();
-          if (!endSesh){
+          if (endSesh){
             publishValues();
           return;
           }
-  }
-    if (neoNum == 16){
+    } //close 1 second interval 'if'
+  if (neoNum == 16){
       neoNum = 0;
-    }
   }
+  } //close while time NOT ready
 
-//if (sessionTimer.isTimerReady()){
-  pixel.clear();
+pixel.clear();
 for (i=0; i<9; i++) {
   pixel.setPixelColor(happyFace[i],orange);
 }
-  pixel.show();
-  display.setCursor(0,0);
-  display.printf("Feeling\n");
-  display.printf("Better?\n");
-  display.display();
-  inputTimer.startTimer(5000);
-      while (!inputTimer.isTimerReady()){}
+pixel.show();
+display.setCursor(0,0);
+display.printf("Feeling\n");
+display.printf("Better?\n");
+display.display();
+inputTimer.startTimer(5000);
+  while (!inputTimer.isTimerReady()){ //build in a 5 second hold for user inputs
+    if (endSesh){
+        publishValues();
+        return;
+        }
+    }
   display.clearDisplay();
   pixel.clear();
   pixel.show();
   display.display();
-      //   if (!endSesh){
-      //   publishValues();
-      //   return;
-      // }
-  
-  if (!endSesh){
+ 
+  if (endSesh){
     publishValues();
     return;
   }
-}
-  // if (!endSesh){
-  //   publishValues();
-  //   return;
-  // }
-//}
+} //close box breathing session
+
 
 void findCenter() { //  Centering Squares
 SessionName = "Finding Center";
-endSesh = true;
+//endSesh = false;
 display.clearDisplay();
-  display.setCursor(0,0);
-display.printf("Find Your\n"); //OLED screen
-display.printf("Center\n");
+display.setCursor(0,0);
+display.printf("Focus on\n"); //OLED screen
+display.printf("Your Center\n");
 display.display();
 delay(500);
 display.clearDisplay();
 centering = OUTER;
 i=0;
-//j=0;
-sessionTimer.startTimer(60000);
+sessionTimer.startTimer(60000); //1min session timer
 readySetGo();
 display.display();
 while(!sessionTimer.isTimerReady()){
- if ((millis() - lastTime) > centeringDelays[i%18]){
+ if ((millis() - lastTime) > centeringDelays[i%18]){ //delays get progressively longer 
     lastTime = millis();
     switch (centering) {
       case OUTER:
@@ -347,10 +336,10 @@ while(!sessionTimer.isTimerReady()){
         pixel.setPixelColor(outsideSquare[k], carrot);
          }
         pixel.show();
-          if (!endSesh){
-          publishValues();
-          return;
-        }
+            if (endSesh){
+            publishValues();
+            return;
+            }
         centering = MIDDLE;
         break;
       
@@ -360,10 +349,10 @@ while(!sessionTimer.isTimerReady()){
         pixel.setPixelColor(middleSquare[k], chocolate);
          }
         pixel.show();
-                  if (!endSesh){
-          publishValues();
-          return;
-        }
+            if (endSesh){
+            publishValues();
+            return;
+            }
         centering = CENTER;
         break;
       
@@ -373,44 +362,48 @@ while(!sessionTimer.isTimerReady()){
         pixel.setPixelColor(centerSquare[k], yellow);
         }
         pixel.show();
-                  if (!endSesh){
-          publishValues();
-          return;
-        }
+           if (endSesh){
+            publishValues();
+            return;
+            }
         centering = OUTER;
         i++;
         break;
     }
   }
-}
+} //end session timer NOT ready
 
-if (sessionTimer.isTimerReady()){
-  pixel.clear();
+//if (sessionTimer.isTimerReady()){
+pixel.clear();
 for (i=0; i<9; i++) {
   pixel.setPixelColor(happyFace[i],orange);
 }
-  pixel.show();
-  display.setCursor(0,0);
-  display.printf("Feeling\n");
-  display.printf("Better?\n");
-  display.display();
-  inputTimer.startTimer(5000);
-  if (inputTimer.isTimerReady()){
-  display.clearDisplay();
-  pixel.clear();
-  pixel.show();
-  display.display();
+pixel.show();
+display.setCursor(0,0);
+display.printf("Feeling\n");
+display.printf("Better?\n");
+display.display();
+inputTimer.startTimer(5000);
+  while (!inputTimer.isTimerReady()){
+          if (endSesh){
+        publishValues();
+        return;
+      }
   }
-  if (!endSesh){
+display.clearDisplay();
+pixel.clear();
+pixel.show();
+display.display();
+  
+  if (endSesh){
     publishValues();
     return;
-  }
-}
-}
+    }
+} //end Finding Center Session
 
-void racingThoughts() {
-  SessionName = "Racing Thoughts";
-  endSesh = true;
+
+void racingThoughts() { //use encoder to have your red light catch the purple light, goal is to stay green
+SessionName = "Racing Thoughts";
 display.clearDisplay();
 display.setCursor(0,0);
 display.printf("Racing\n"); //OLED screen
@@ -423,110 +416,112 @@ display.clearDisplay();
 display.display();
 i = 0;
 neoNum = 0;
-while(!sessionTimer.isTimerReady()){
+while(!sessionTimer.isTimerReady()){ //1 minute session timer
  if ((millis() - lastTime) > centeringDelays[i]){ //this time comparison gets progressively bigger ie: slower
- // Serial.printf("Racing delay is %ims\n", centeringDelays[i]);
   lastTime = millis();
-encPos = myEnc.read();
+  encPos = myEnc.read();
 //Serial.printf("encoder position is %i\n", encPos);
-encToPixel = map(encPos, 0, 95, 0, 24);
-    if (encToPixel != holdPixel) {
+  encToPixel = map(encPos, 0, 95, 0, 24); //map encoder position to the pixels available
+    if (encToPixel != holdPixel) { //is the encoder position has changed clear the previous position
       pixel.clear();
       pixel.show();
     }
-      if (!endSesh){
+    if (endSesh){
     publishValues();
     return;
-  }
+    }
 // if (encPos <= encMin) {
 //   encPos = encMax;
 //   myEnc.write(encMax);
 // }
-    if (encPos >= encMax) {
+    if (encPos >= encMax) { //allows encoder light to loop back to starting position
       encPos = encMin;
       myEnc.write(encMin);
     }
   pixel.clear();
   pixel.setPixelColor(racingNumbers[encToPixel],red);
-    holdPixel = encToPixel;
+    holdPixel = encToPixel; //stores current encoder/pixel position
   pixel.setPixelColor(racingNumbers[neoNum], purple);
     if (encToPixel == neoNum){
-      pixel.setPixelColor(racingNumbers[neoNum], green);
+      pixel.setPixelColor(racingNumbers[neoNum], green); //pixel displays as green if two positions match
     }
   pixel.show();
 
-  neoNum = neoNum + 1;
-      if (neoNum == 25){
+  neoNum = neoNum + 1; //increment neoNum
+      if (neoNum == 25){ //reset back to beginning of array once at max
       neoNum = 0;
-      i++;
+      i++; //after 1 full neoNum cycle, increment the delay time
       if (i == 18){
         i = 0;
       }
     }
-}
-}
-if (sessionTimer.isTimerReady()){
-  pixel.clear();
+  }
+} //end session timer NOT ready
+
+pixel.clear();
 for (i=0; i<9; i++) {
   pixel.setPixelColor(happyFace[i],orange);
 }
-  pixel.show();
-  display.setCursor(0,0);
-  display.printf("Feeling\n");
-  display.printf("Better?\n");
-  display.display();
-  inputTimer.startTimer(5000);
-  if (inputTimer.isTimerReady()){
-  display.clearDisplay();
-  pixel.clear();
-  pixel.show();
-  display.display();
+pixel.show();
+display.setCursor(0,0);
+display.printf("Feeling\n");
+display.printf("Better?\n");
+display.display();
+inputTimer.startTimer(5000);
+  while (!inputTimer.isTimerReady()){
+    if (endSesh){
+    publishValues();
+    return;
+    }
   }
-  if (!endSesh){
+display.clearDisplay();
+pixel.clear();
+pixel.show();
+display.display();
+  if (endSesh){
     publishValues();
     return;
   }
-}
-}
+} //end Racing Thoughts Session
+
 
 void maxMotivation(){
-  SessionName = "Max Motivation";
-  endSesh = true;
+SessionName = "Max Motivation";
 display.clearDisplay();
 display.setCursor(0,0);
 display.printf("Energy\n"); //OLED screen
 display.printf("Boost\n");
 display.display();
 delay(500);
-sessionTimer.startTimer(60000);
+sessionTimer.startTimer(60000); //1min session timer
 readySetGo();
 display.clearDisplay();
 display.display();
-i = 4;
+i = 4; //starting in the delays array at 0.8seconds and getting faster via decrement
 neoNum = 0;
 while(!sessionTimer.isTimerReady()){
  if ((millis() - lastTime) > centeringDelays[i]){
  // Serial.printf("Racing delay is %ims\n", centeringDelays[i]);
   lastTime = millis();
-encPos = myEnc.read();
+  encPos = myEnc.read();
 //Serial.printf("encoder position is %i\n", encPos);
-encToPixel = map(encPos, 0, 95, 0, 24);
+  encToPixel = map(encPos, 0, 95, 0, 24);
     if (encToPixel != holdPixel) {
       pixel.clear();
       pixel.show();
     }
-      if (!endSesh){
-    publishValues();
-    return;
-  }
+      if (endSesh){
+        publishValues();
+        return;
+      }
 if (encPos <= encMin) {
   encPos = encMax;
   myEnc.write(encMax);
 }
-    if (encPos >= encMax) {
-      encPos = encMin;
-      myEnc.write(encMin);
-    }
+if (encPos >= encMax) {
+  encPos = encMin;
+  myEnc.write(encMin);
+  }
   pixel.clear();
   pixel.setPixelColor(motivationNumbers[encToPixel],turquoise);
     holdPixel = encToPixel;
@@ -536,41 +531,43 @@ if (encPos <= encMin) {
     }
   pixel.show();
   neoNum = neoNum + 1;
-
-      if (neoNum == 25){
+    if (neoNum == 25){
       neoNum = 0;
       i--;
       if (i == 0){
-        i = 6;
+        i = 4;
       }
     }
 }
-}
-if (sessionTimer.isTimerReady()){
-  pixel.clear();
+} //close Session Timer NOT ready
+
+pixel.clear();
 for (i=0; i<9; i++) {
   pixel.setPixelColor(happyFace[i],orange);
 }
-  pixel.show();
-  display.setCursor(0,0);
-  display.printf("Feeling\n");
-  display.printf("Better?\n");
-  display.display();
-  inputTimer.startTimer(5000);
-  if (inputTimer.isTimerReady()){
-  display.clearDisplay();
-  pixel.clear();
-  pixel.show();
-  display.display();
+pixel.show();
+display.setCursor(0,0);
+display.printf("Feeling\n");
+display.printf("Better?\n");
+display.display();
+inputTimer.startTimer(5000);
+  while (!inputTimer.isTimerReady()){
+          if (endSesh){
+        publishValues();
+        return;
+      }
   }
-  if (!endSesh){
+display.clearDisplay();
+pixel.clear();
+pixel.show();
+display.display(); 
+  if (endSesh){
     publishValues();
     return;
   }
-}
-}
+} //end Max Motivation mode
 
-void publishValues() {
+void publishValues() { //at the end of each session publish data to MQTT
   if(mqtt.Update()) {
      pubDateFeed.publish(DateOnly);
      pubTimeFeed.publish(TimeOnly);
@@ -591,13 +588,10 @@ void sleepULP() {
   delay(1000);
   if (result.wakeupReason () == SystemSleepWakeupReason::BY_GPIO) {
     Serial.printf("Awaked by GPIO %i\n", result.wakeupPin());
-    // Serial.printf("waking dipValue is %i\n", dipValue);
-    // // dipValue = 0;
-    //     Serial.printf("next dipValue is %i\n", dipValue);
-    System.reset();
+    System.reset(); //software system reset
   }
 }
 
-void buttonInterrupt() {
+void buttonInterrupt() { //encoder button
   sleepFlag = true;
 }
