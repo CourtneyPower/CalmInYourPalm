@@ -2,7 +2,7 @@
  * Project CalmInYourPalm_capstone
  * Author: Courtney Power
  * Date: 5.17.24
- * Testing the various neopixel arrays needed for the device
+ * Final Code for Capstone Project
  */
 
 // Include Particle Device OS APIs
@@ -141,27 +141,27 @@ delay(3000);
 
 switch (dipValue) {
   case 0: //all switches off
-  makeSelection(); //line 222
+  makeSelection(); //line 214
   break;
 
   case 1: //dipOne 'on'
-  boxBreathing(); //line 260
+  boxBreathing(); //line 252
   break;
 
   case 2: //dipTwo 'on'
-  findCenter(); //line 321
+  findCenter(); //line 314
   break;
 
   case 4: //dipThree 'on'
-  racingThoughts(); //line 409
+  racingThoughts(); //line 405
   break;
 
   case 8: //dipFour 'on'
-  maxMotivation(); //line 489
+  maxMotivation(); //line 488
   break;
 
   default: //if dipswitches in any configuration but above triggers warning
-  pickOne(); //line 232
+  pickOne(); //line 224
   break;
 }
  if (sleepFlag){ //changes with encoder switch press
